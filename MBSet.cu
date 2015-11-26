@@ -68,7 +68,7 @@ void display(void)
 {
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT);
-  //glLoadIdentity();
+  glLoadIdentity();
   //gluLookAt(0.0, 0.0, 5.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
   // glTranslatef(WINDOW_DIM/2, WINDOW_DIM/2, 0);
   glScalef(0.003, 0.003, 0);
