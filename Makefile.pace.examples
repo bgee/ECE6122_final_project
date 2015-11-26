@@ -1,0 +1,27 @@
+# Build the simple CUDA examples
+# George F. Riley, ECE8893, Fall 2012
+
+# Use the nvidia cc compiler
+CXX=nvcc
+CXX=/usr/local/cuda-6.5/bin/nvcc
+
+all:	SimpleAdd SimpleAdd2 SimpleAdd3 SimpleAdd4 HelloCuda
+
+SimpleAdd:	SimpleAdd.cu
+	$(CXX) -o SimpleAdd SimpleAdd.cu
+
+SimpleAdd2:	SimpleAdd2.cu
+	$(CXX) -o SimpleAdd2 SimpleAdd2.cu
+
+SimpleAdd3:	SimpleAdd3.cu
+	$(CXX) -o SimpleAdd3 SimpleAdd3.cu
+
+SimpleAdd4:	SimpleAdd4.cu
+	$(CXX) -o SimpleAdd4 SimpleAdd4.cu
+
+HelloCuda:	HelloCuda.cu
+	$(CXX) -o HelloCuda HelloCuda.cu
+
+clean:
+	rm -f *.o HelloCuda SimpleAdd SimpleAdd2 SimpleAdd3 SimpleAdd4
+
