@@ -20,6 +20,7 @@
 // Size of window in pixels, both width and height
 #define WINDOW_DIM            512
 #define DIFF                  3.0
+#define THREADS_PER_BLOCK     32
 
 using namespace std;
 
@@ -111,6 +112,25 @@ void setupSet(Complex* set)
 }
 */
 
+__global__ void computeSingle(RGB *d_results, RGB *d_colors)
+{
+  int index = threadIdx.x + blockIdx.x * blockDim.x;
+  int row = index / WINDOW_DIM;
+  int col = index % WINDOW_DIM;
+  Complex current = Complex(-2.0 + DIFF*double(row)/double(WINDOW_DIM),
+			    -1.2 + DIFF*double(col)/double(WINDOW_DIM));
+  Complex c = Complex(current);
+  int count = -1;
+  while ((count < 2000) && (current.magnitude2() < 4)){
+    current = current * current + c;
+    count++;
+  }
+  d_results[index].r = d_colors[count].r;
+  d_results[index].g = d_colors[count].g;
+  d_results[index].b = d_colors[count].b;
+}
+
+
 __global__ void computeSet(RGB *d_results, RGB *d_colors)
 {
   int b = WINDOW_DIM;
@@ -177,7 +197,9 @@ int main(int argc, char** argv)
   // set = new Complex[WINDOW_DIM * WINDOW_DIM];
   // Calculate the interation counts
   cout << "before comuteSet" << endl;
-  computeSet<<<1, 1>>>(d_results, d_colors);
+  //computeSet<<<1, 1>>>(d_results, d_colors);
+  computeSingle<<<WINDOW_DIM*WINDOW_DIM/THREADS_PER_BLOCK,
+    THREADS_PER_BLOCK>>>(d_results, d_colors);
   cout << "after computeSet" << endl;
   cudaMemcpy(h_results, d_results, WINDOW_DIM*WINDOW_DIM*sizeof(RGB),
 	     cudaMemcpyDeviceToHost);
