@@ -125,6 +125,7 @@ __global__ void computeSingle(RGB *d_results, RGB *d_colors, double r,
 			      double i, double diff)
 {
   int index = threadIdx.x + blockIdx.x * blockDim.x;
+  printf("%d\n", index);
   int row = index / WINDOW_DIM;
   int col = index % WINDOW_DIM;
   Complex current = Complex(r + diff*double(row)/double(WINDOW_DIM),
@@ -185,13 +186,23 @@ void mouse(int button, int state, int x, int y)
     e_y = e_x - s_x + s_y;
     select_ready = true;
     glutPostRedisplay();
-    /*double delta = maxC.r - minC.r;
+    double delta = maxC.r - minC.r;
     double start = delta*((double) (s_x)) / ((double) WINDOW_DIM);
     minC = Complex(minC.r + start,
 		   minC.i + start);
-    double end = delta*((double) (e_x)) / ((double) WINDOW_DIM);
-    maxC = Complex(maxC.r - end, maxC.i - end);*/
-
+    double end = delta*(1.0 - ((double) (e_x)) / ((double) WINDOW_DIM));
+    maxC = Complex(maxC.r - end, maxC.i - end);
+    cout << "before computeSingle" << endl;
+    computeSingle<<<WINDOW_DIM*WINDOW_DIM/THREADS_PER_BLOCK,
+      THREADS_PER_BLOCK>>>(d_results, d_colors, minC.r, minC.i, maxC.r-minC.r);
+    cudaMemcpy(h_results, d_results, WINDOW_DIM*WINDOW_DIM*sizeof(RGB),
+	       cudaMemcpyDeviceToHost);
+    cout << s_x << " " << s_y << " " << e_x << " " << e_y << endl;
+    cout << minC.r << " " << minC.i << " aaaa" << endl;
+    cout << maxC.r << " " << maxC.i << " bbbb " << end << endl;
+    select_ready = false;
+    glutPostRedisplay();
+    //display();
   }
   cout << s_x << " " << s_y << " " << e_x << " " << e_y << endl;
 }
@@ -237,7 +248,7 @@ int main(int argc, char** argv)
   cout << "before comuteSet" << endl;
   //computeSet<<<1, 1>>>(d_results, d_colors);
   computeSingle<<<WINDOW_DIM*WINDOW_DIM/THREADS_PER_BLOCK,
-    THREADS_PER_BLOCK>>>(d_results, d_colors, -2.0, -1.2, maxC.r-minC.r);
+    THREADS_PER_BLOCK>>>(d_results, d_colors, minC.r, minC.i, maxC.r-minC.r);
   cout << "after computeSet" << endl;
   cudaMemcpy(h_results, d_results, WINDOW_DIM*WINDOW_DIM*sizeof(RGB),
 	     cudaMemcpyDeviceToHost);
