@@ -50,6 +50,9 @@ RGB *h_results, *d_results, *h_colors, *d_colors;
 
 int s_x, s_y, e_x, e_y;
 bool select_ready = false;
+bool clicked = false;
+Complex *minArray, *maxArray;
+int arrayCount = 0;
 
 void InitializeColors()
 {
@@ -68,6 +71,15 @@ void InitializeColors()
   colors[maxIt] = RGB(); // black
 }
 
+void lineLoop(int x1, int y1, int x2, int y2)
+{
+  glBegin(GL_LINE_LOOP);
+  glVertex2i(x1, y1);
+  glVertex2i(x2, y1);
+  glVertex2i(x2, y2);
+  glVertex2i(x1, y2);
+  glEnd();
+}
 
 void display(void)
 {
@@ -76,7 +88,7 @@ void display(void)
   glLoadIdentity();
   //gluLookAt(0.0, 0.0, 0.00000000000005, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
   // glTranslatef(WINDOW_DIM/2, WINDOW_DIM/2, 0);
-  glScalef(0.004, 0.004, 0);
+  glScalef(0.003, 0.003, 0);
   glBegin(GL_POINTS);
   for (int i = 0; i < WINDOW_DIM; i++){
     for (int j = 0; j < WINDOW_DIM; j++){
@@ -94,9 +106,9 @@ void display(void)
     }
   }
   glEnd();
-  if (select_ready){
+  if (select_ready || clicked){
     glColor3d(1.0, 0.0, 0.0);
-    glRecti(s_x - WINDOW_DIM/2, -s_y+WINDOW_DIM/2, e_x-WINDOW_DIM/2,
+    lineLoop(s_x - WINDOW_DIM/2, -s_y+WINDOW_DIM/2, e_x-WINDOW_DIM/2,
 	    -e_y+WINDOW_DIM/2);
   }
   glFinish();
@@ -125,21 +137,21 @@ __global__ void computeSingle(RGB *d_results, RGB *d_colors, double r,
 			      double i, double diff)
 {
   int index = threadIdx.x + blockIdx.x * blockDim.x;
-  printf("%d\n", index);
+  //printf("%d\n", index);
   int row = index / WINDOW_DIM;
   int col = index % WINDOW_DIM;
   Complex current = Complex(r + diff*double(row)/double(WINDOW_DIM),
 			    i + diff*double(col)/double(WINDOW_DIM));
   Complex c = Complex(current);
   int count = 0;
-  while ((count < 2002) && (current.magnitude2() < 4)){
+  while ((count <= (maxIt+1)) && (current.magnitude2() < 4)){
     current = current * current + c;
     count++;
   }
   //if (count == 0){printf("count zero %d %d\n", row, col);}
-  d_results[index].r = d_colors[count-1].r;
-  d_results[index].g = d_colors[count-1].g;
-  d_results[index].b = d_colors[count-1].b;
+  d_results[index].r = d_colors[count].r;
+  d_results[index].g = d_colors[count].g;
+  d_results[index].b = d_colors[count].b;
 }
 
 
@@ -180,14 +192,22 @@ void mouse(int button, int state, int x, int y)
   if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN){
     s_x = x;
     s_y = y;
+    clicked = true;
+    cout << "clicked true" << button << GLUT_LEFT_BUTTON << " "
+	 << state << GLUT_DOWN << endl;
   }
+
   else if (button == GLUT_LEFT_BUTTON && state == GLUT_UP){
     e_x = x;
     e_y = e_x - s_x + s_y;
     select_ready = true;
+    clicked = false;
     glutPostRedisplay();
     double delta = maxC.r - minC.r;
     double start = delta*((double) (s_x)) / ((double) WINDOW_DIM);
+    minArray[arrayCount] = minC;
+    maxArray[arrayCount] = maxC;
+    arrayCount++;
     minC = Complex(minC.r + start,
 		   minC.i + start);
     double end = delta*(1.0 - ((double) (e_x)) / ((double) WINDOW_DIM));
@@ -204,9 +224,37 @@ void mouse(int button, int state, int x, int y)
     glutPostRedisplay();
     //display();
   }
+  /*if (clicked && button == GLUT_LEFT_BUTTON && state == GLUT_DOWN){
+    cout << "clicked" << endl;
+    e_x = x;
+    e_y = e_x - s_x + s_y;
+    glutPostRedisplay();
+    }*/
   cout << s_x << " " << s_y << " " << e_x << " " << e_y << endl;
 }
 
+void motion(int x, int y)
+{
+  if (clicked){
+    e_x = x;
+    e_y = e_x - s_x + s_y;
+    glutPostRedisplay();
+  }
+}
+
+void keyboard(unsigned char key, int x, int y)
+{
+  if (key == 'b' && arrayCount > 0){
+    minC = minArray[arrayCount-1];
+    maxC = maxArray[arrayCount-1];
+    arrayCount--;
+    computeSingle<<<WINDOW_DIM*WINDOW_DIM/THREADS_PER_BLOCK,
+      THREADS_PER_BLOCK>>>(d_results, d_colors, minC.r, minC.i, maxC.r-minC.r);
+    cudaMemcpy(h_results, d_results, WINDOW_DIM*WINDOW_DIM*sizeof(RGB),
+	       cudaMemcpyDeviceToHost);
+    glutPostRedisplay();
+  }
+}
 
 int main(int argc, char** argv)
 {
@@ -230,6 +278,11 @@ int main(int argc, char** argv)
   cudaMalloc((void **)&d_results, WINDOW_DIM*WINDOW_DIM*sizeof(RGB));
   cudaMalloc((void **)&d_colors, (maxIt+1)*sizeof(RGB));
   h_results = new RGB[WINDOW_DIM*WINDOW_DIM*sizeof(RGB)];
+  // initialize array for min and max
+  minArray = (Complex*)malloc(100*sizeof(Complex));
+  maxArray = (Complex*)malloc(100*sizeof(Complex));
+
+  arrayCount = 0;
   cout << "after cudaMalloc" << endl;
   InitializeColors();
   ofstream colo;
@@ -274,6 +327,8 @@ int main(int argc, char** argv)
   //cudaFree(d_results);
   glutDisplayFunc(display);
   glutMouseFunc(mouse);
+  glutMotionFunc(motion);
+  glutKeyboardFunc(keyboard);
   // Grad students, pick the colors for the 0 .. 1999 iteration count pixels
 
   glutMainLoop(); // THis will callback the display, keyboard and mouse
