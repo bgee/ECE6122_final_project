@@ -212,6 +212,14 @@ void mouse(int button, int state, int x, int y)
     clicked = false;
     glutPostRedisplay();
     double delta = maxC.r - minC.r;
+    if (e_x < s_x){
+      int temp_x = s_x;
+      int temp_y = s_y;
+      s_x = e_x;
+      s_y = e_y;
+      e_x = temp_x;
+      e_y = temp_y;
+    }
     double start = delta*((double) (s_x)) / ((double) WINDOW_DIM);
     minArray[arrayCount] = minC;
     maxArray[arrayCount] = maxC;
