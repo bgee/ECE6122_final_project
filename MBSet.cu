@@ -88,7 +88,8 @@ void display(void)
   glLoadIdentity();
   //gluLookAt(0.0, 0.0, 0.00000000000005, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
   // glTranslatef(WINDOW_DIM/2, WINDOW_DIM/2, 0);
-  glScalef(0.003, 0.003, 0);
+  glOrtho(-WINDOW_DIM/2, WINDOW_DIM/2, -WINDOW_DIM/2, WINDOW_DIM/2, 0.0, 1.0);
+  //glScalef(0.003, 0.003, 0);
   glBegin(GL_POINTS);
   for (int i = 0; i < WINDOW_DIM; i++){
     for (int j = 0; j < WINDOW_DIM; j++){
