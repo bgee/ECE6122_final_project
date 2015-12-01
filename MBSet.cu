@@ -143,15 +143,22 @@ __global__ void computeSingle(RGB *d_results, RGB *d_colors, double r,
   Complex current = Complex(r + diff*double(row)/double(WINDOW_DIM),
 			    i + diff*double(col)/double(WINDOW_DIM));
   Complex c = Complex(current);
-  int count = 0;
+  int count = -1;
   while ((count <= (maxIt+1)) && (current.magnitude2() < 4)){
     current = current * current + c;
     count++;
   }
   //if (count == 0){printf("count zero %d %d\n", row, col);}
-  d_results[index].r = d_colors[count].r;
-  d_results[index].g = d_colors[count].g;
-  d_results[index].b = d_colors[count].b;
+  if (count == -1){
+    d_results[index].r = 1.0;
+    d_results[index].g = 1.0;
+    d_results[index].b = 1.0;
+  }
+  else {
+    d_results[index].r = d_colors[count].r;
+    d_results[index].g = d_colors[count].g;
+    d_results[index].b = d_colors[count].b;
+  }
 }
 
 
