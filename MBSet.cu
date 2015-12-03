@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include "Complex.cu"
 #include <fstream>
+#include <stdlib.h>
 
 #include <GL/freeglut.h>
 
@@ -206,8 +207,8 @@ void mouse(int button, int state, int x, int y)
   }
 
   else if (button == GLUT_LEFT_BUTTON && state == GLUT_UP){
-    e_x = x;
-    e_y = e_x - s_x + s_y;
+    //e_x = x;
+    //e_y = e_x - s_x + s_y;
     select_ready = true;
     clicked = false;
     glutPostRedisplay();
@@ -223,10 +224,14 @@ void mouse(int button, int state, int x, int y)
     double start = delta*((double) (s_x)) / ((double) WINDOW_DIM);
     int min_x = (s_x < e_x) ? s_x : e_x;
     int min_y = (s_y > e_y) ? s_y : e_y;
+    //min_x = abs(min_x);
+    //min_y = abs(min_y);
     double start_x = delta*((double) (min_x)) / ((double) WINDOW_DIM);
     double start_y = delta - delta*((double) (min_y)) / ((double) WINDOW_DIM);
     int max_x = (s_x > e_x) ? s_x : e_x;
     int max_y = (s_y < e_y) ? s_y : e_y;
+    //max_x = abs(max_x);
+    //max_y = abs(max_y);
     double end_x = delta - delta*((double) (max_x)) / ((double) WINDOW_DIM);
     double end_y = delta*((double) (max_y)) / ((double) WINDOW_DIM);
     minArray[arrayCount] = minC;
@@ -265,7 +270,14 @@ void motion(int x, int y)
 {
   if (clicked){
     e_x = x;
-    e_y = e_x - s_x + s_y;
+    if ((x-s_x)*(y-s_y) > 0){
+      e_y = e_x - s_x + s_y;
+    }
+    else {
+      e_y = s_y - e_x + s_x;
+    }
+    //cout << "motion*************" << s_x << " " << s_y << " " << e_x
+    //	 << " " << e_y << endl;
     glutPostRedisplay();
   }
 }
