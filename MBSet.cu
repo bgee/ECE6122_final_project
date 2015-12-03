@@ -221,13 +221,25 @@ void mouse(int button, int state, int x, int y)
       e_y = temp_y;
     }
     double start = delta*((double) (s_x)) / ((double) WINDOW_DIM);
+    int min_x = (s_x < e_x) ? s_x : e_x;
+    int min_y = (s_y > e_y) ? s_y : e_y;
+    double start_x = delta*((double) (min_x)) / ((double) WINDOW_DIM);
+    double start_y = delta - delta*((double) (min_y)) / ((double) WINDOW_DIM);
+    int max_x = (s_x > e_x) ? s_x : e_x;
+    int max_y = (s_y < e_y) ? s_y : e_y;
+    double end_x = delta - delta*((double) (max_x)) / ((double) WINDOW_DIM);
+    double end_y = delta*((double) (max_y)) / ((double) WINDOW_DIM);
     minArray[arrayCount] = minC;
     maxArray[arrayCount] = maxC;
     arrayCount++;
-    minC = Complex(minC.r + start,
-		   minC.i + start);
+    minC = Complex(minC.r + start_x,
+		   minC.i + start_y);
     double end = delta*(1.0 - ((double) (e_x)) / ((double) WINDOW_DIM));
-    maxC = Complex(maxC.r - end, maxC.i - end);
+    maxC = Complex(maxC.r - end_x, end_y);
+    cout << "------------" << min_x << " " << min_y << " " << max_x << " "
+	 << max_y << endl;
+    cout << "------------" << start_x << " " << start_y << " " << end_x
+	 << " " << end_y << endl;
     cout << "before computeSingle" << endl;
     computeSingle<<<WINDOW_DIM*WINDOW_DIM/THREADS_PER_BLOCK,
       THREADS_PER_BLOCK>>>(d_results, d_colors, minC.r, minC.i, maxC.r-minC.r);
