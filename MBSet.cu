@@ -221,7 +221,7 @@ void mouse(int button, int state, int x, int y)
       e_x = temp_x;
       e_y = temp_y;
     }
-    double start = delta*((double) (s_x)) / ((double) WINDOW_DIM);
+    //double start = delta*((double) (s_x)) / ((double) WINDOW_DIM);
     int min_x = (s_x < e_x) ? s_x : e_x;
     int min_y = (s_y > e_y) ? s_y : e_y;
     //min_x = abs(min_x);
@@ -299,10 +299,10 @@ void keyboard(unsigned char key, int x, int y)
 int main(int argc, char** argv)
 {
   // debug file to output RGB
-  ofstream r, g, b;
+  /*ofstream r, g, b;
   r.open("r.csv");
   g.open("g.csv");
-  b.open("b.csv");
+  b.open("b.csv");*/
   // Initialize OPENGL here
   // Set up necessary host and device buffers
   // set up the opengl callbacks for display, mouse and keyboard
@@ -325,12 +325,12 @@ int main(int argc, char** argv)
   arrayCount = 0;
   cout << "after cudaMalloc" << endl;
   InitializeColors();
-  ofstream colo;
+  /*ofstream colo;
   colo.open("colo.csv");
   for (int i = 0; i < (maxIt+1); i++){
     colo << colors[i].r << " " << colors[i].g << " " << colors[i].b << endl;
   }
-  colo.close();
+  colo.close();*/
   cout << "after colors" << endl;
   cudaMemcpy(d_colors, colors, (maxIt + 1)*sizeof(RGB),
 	     cudaMemcpyHostToDevice);
@@ -350,7 +350,7 @@ int main(int argc, char** argv)
     //h_results[i] = RGB(1, 1, 1);
     //cout << h_results[i].r << " ";
   }
-  for (int i = 0; i < WINDOW_DIM; i++){
+  /*for (int i = 0; i < WINDOW_DIM; i++){
     for (int j = 0; j < WINDOW_DIM; j++){
       if (h_results[i*WINDOW_DIM + j].r != 0.0){
 	//cout << i << " " << j << " ";
@@ -362,7 +362,7 @@ int main(int argc, char** argv)
     }
     r << "\n"; g << "\n"; b << "\n";
   }
-  r.close(); g.close(); b.close();
+  r.close(); g.close(); b.close();*/
   cout << endl;
   //cudaFree(d_results);
   glutDisplayFunc(display);
